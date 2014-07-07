@@ -11,6 +11,7 @@ python main.py
 ## Current Features
 * Take user's login information, log into game
 * Wait in the play queue
+* Two-factor authentication
 * Anti-aliasing on window borders (read: no more jaggies)
 * Animated launcher effects: rotating dials, flashing electricity
 * Custom text boxes
@@ -19,7 +20,6 @@ python main.py
 * Downloading new files from content server
 
 ## To Be Implemented
-* Two-factor auth
 * Invasion Tracker with notifications
 * Resource pack GUI
 
