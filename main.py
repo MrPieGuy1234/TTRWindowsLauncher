@@ -1,4 +1,4 @@
-import sys, os, subprocess
+import sys, os, subprocess, shutil
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4.QtWebKit import *
@@ -6,7 +6,7 @@ from Button import *
 from Effect import *
 from LoginTextBox import *
 import httplib, urllib, json
-import hashlib
+import hashlib, bz2
 class Main(QMainWindow):
 
 	########################
@@ -31,7 +31,7 @@ class Main(QMainWindow):
 		# make sure text can show up before the request hangs the application for some reason
 		self.statusLabel.setText("Logging in...")
 		timer = QTimer(self.bgImage)
-		QObject.connect(timer, SIGNAL("timeout()"), self.startLogin)
+		QObject.connect(timer, SIGNAL("timeout()"), self.checkForUpdates)
 		timer.setSingleShot(True)
 		timer.start(100)
 	def startLogin(self):
@@ -123,12 +123,44 @@ class Main(QMainWindow):
 		# we're done here
 		sys.exit()
 	def checkForUpdates(self):
-		# incomplete
+		# retrieve patch manifest
 		patchmanifestRaw = urllib.urlopen("http://s3.amazonaws.com/cdn.toontownrewritten.com/content/patchmanifest.txt").read()
+		# parse it
 		patchmanifest = json.loads(patchmanifestRaw)
+		# iterate over list
 		for file in patchmanifest:
-			if "win32" in patchManifest[file]["only"]:
-				print(patchManifest[file] + ": " + generateHash(patchManifest[file])
+			# if file is for windows (we dont need to be checking darwin files (yet))
+			if "win32" in patchmanifest[file]["only"]:
+				# get hash of local version
+				currentVerHash = self.generateHash(file)
+				# get hash of server version
+				serverHash = patchmanifest[file]["hash"]
+				if currentVerHash != serverHash:
+					# pull new file from server
+					# TODO: instead of redownloading whole file, figure out how to use patches
+					self.statusLabel.setText("Patch found for " + file)
+					print("Patch found for " + file)
+					newFileComp = urllib.URLopener()
+					newFileComp.retrieve("http://kcmo-1.download.toontownrewritten.com/content/" + file,
+									 self.gameInstallPath + "temp/" + file + ".bz2")
+					print("Decompressing")
+					newFileData = bz2.BZ2File(self.gameInstallPath + "temp/" + file + ".bz2").read()
+					newFile = open(self.gameInstallPath + "temp/" + file, "wb")
+					newFile.write(newFileData)
+					newFile.close()
+					os.remove(self.gameInstallPath + file)
+					shutil.move(self.gameInstallPath + "temp/" + file, self.gameInstallPath + file)
+					self.startLogin()
+				# print(file + ": " + self.generateHash(file))
+				
+	def generateHash(self, filename):
+		sha = hashlib.sha1()
+		file = open(self.gameInstallPath + filename, "rb")
+		try:
+			sha.update(file.read())
+		finally:
+			file.close()
+		return sha.hexdigest()
 		
 	########################
 	#		 WINDOW		   #

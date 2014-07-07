@@ -14,8 +14,10 @@ python main.py
 * Anti-aliasing on window borders (read: no more jaggies)
 * Animated launcher effects: rotating dials, flashing electricity
 * Custom text boxes
+* View recent news on the chalkboard (mousing over gives a better view)
+* Linux support (up to launching the game anyway)
 
-## Features To Be Implemented
+## To Be Implemented
 * Downloading new files from game server
 * Two-factor auth
 * Invasion Tracker with notifications
