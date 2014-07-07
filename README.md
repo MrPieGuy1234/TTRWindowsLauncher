@@ -16,9 +16,8 @@ python main.py
 * Custom text boxes
 * View recent news on the chalkboard (mousing over gives a better view)
 * Linux support (up to launching the game anyway)
-
+* Downloading new files from game server (not multithreaded yet)
 ## To Be Implemented
-* Downloading new files from game server
 * Two-factor auth
 * Invasion Tracker with notifications
 * Resource pack GUI
