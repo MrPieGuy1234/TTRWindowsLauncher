@@ -17,6 +17,7 @@ python main.py
 * View recent news on the chalkboard (mousing over gives a better view)
 * Linux support (up to launching the game anyway)
 * Downloading new files from game server (not multithreaded yet)
+
 ## To Be Implemented
 * Two-factor auth
 * Invasion Tracker with notifications
