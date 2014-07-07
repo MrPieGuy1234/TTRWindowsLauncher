@@ -5,6 +5,7 @@ from PyQt4.QtWebKit import *
 from Button import *
 from Effect import *
 from LoginTextBox import *
+from Dialog import *
 import httplib, urllib, json
 import hashlib, bz2
 from BackgroundWorker import *
@@ -60,7 +61,7 @@ class Main(QMainWindow):
 			self.startGame(formattedData["cookie"], formattedData["gameserver"])
 			self.connection.close()
 		elif formattedData["success"] == "delayed":
-			# waiting in the queue, save the token for later, try again after 0.5 seconds (DOS them in oblivion)
+			# waiting in the queue, save the token for later, try again after 0.5 seconds (DOS them into oblivion)
 			print("Now waiting in queue! ETA: " + formattedData["eta"] + ", Position in line: " + formattedData["position"])
 			self.statusLabel.setText("ETA: " + formattedData["eta"] + ", Position in line: " + formattedData["position"])
 			self.queueToken = formattedData["queueToken"]
@@ -69,16 +70,30 @@ class Main(QMainWindow):
 			timer.setSingleShot(True)
 			timer.start(500)
 		elif formattedData["success"] == "partial":
-			# TODO: implement two-factor
-			print("Two-factor auth not yet implemented")
-			self.statusLabel.setText("Two-factor not available.")
-			self.connection.close()
+			# store response token
+			self.authToken = formattedData["responseToken"]
+			# show dialog
+			self.testDialog.show()
+			# connect submit and cancel buttons to functions
+			self.testDialog.accepted.connect(self.continueTwoFactor)
+			self.testDialog.rejected.connect(self.cancelTwoFactor)
 		else:
 			# can't log in, probably because of invalid password
 			print("Unable to log into the game. Reason: " + formattedData["banner"])
 			self.statusLabel.setText(formattedData["banner"])
 			self.connection.close()
-		
+	
+	def continueTwoFactor(self):
+		# tell api user's token and the response token from earlier
+		params = {"appToken": self.testDialog.appToken, "authToken": self.authToken}
+		headers = {"Content-type": "application/x-www-form-urlencoded",
+				   "Accept": "text/plain"}
+		self.apiWorker.setProps(params, headers, self.connection)
+		self.apiWorker.finished.connect(self.continueLogin)
+		self.apiWorker.start()
+	def cancelTwoFactor(self):
+		# user cancelled login
+		self.statusLabel.setText("Login cancelled")
 	def pingQueue(self):
 		print("Pinging server for position in line...")
 		params = {"queueToken": self.queueToken}
@@ -240,6 +255,9 @@ class Main(QMainWindow):
         # listen for login signal
 		QObject.connect(self.goButton, SIGNAL("loginEvent()"), self.loginEvent)
 		QObject.connect(self.passwordTextBox, SIGNAL("loginEvent()"), self.loginEvent)
+		
+		# create the two-factor dialog for later
+		self.twoFactorDialog = TwoFactorDialog()
 		
 		sys.exit(app.exec_())
 		
