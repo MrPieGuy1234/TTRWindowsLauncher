@@ -16,7 +16,7 @@ python main.py
 * Custom text boxes
 * View recent news on the chalkboard (mousing over gives a better view)
 * Linux support (up to launching the game anyway)
-* Downloading new files from game server (not multithreaded yet)
+* Downloading new files from content server
 
 ## To Be Implemented
 * Two-factor auth

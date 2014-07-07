@@ -202,9 +202,9 @@ class Main(QMainWindow):
 		self.monkey.show()
 	
 	def fadePapers(self, event):
-		self.chalkboardPapers.setStyleSheet("background-image: url(./images/window_chalkboard_papers_half.png); opacity: 50%")
+		self.chalkboardPapers.setStyleSheet("background-image: url(./images/window_chalkboard_papers_half.png);")
 	def unfadePapers(self, event):
-		self.chalkboardPapers.setStyleSheet("background-image: url(./images/window_chalkboard_papers.png); opacity: 50%")
+		self.chalkboardPapers.setStyleSheet("background-image: url(./images/window_chalkboard_papers.png);")
 	########################
 	#		  MAIN		   #
 	########################
