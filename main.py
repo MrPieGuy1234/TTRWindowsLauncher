@@ -29,7 +29,7 @@ class Main(QMainWindow):
 			# if someone tries to drag a button
 			pass
 	def loginEvent(self):
-		self.startLogin()
+		self.checkForUpdates()
 	def startLogin(self):
 		self.statusLabel.setText("Logging in...")
 		print("Sending username/password to server...")
@@ -52,6 +52,7 @@ class Main(QMainWindow):
 			formattedData = json.loads(data)
 		except ValueError:
 			self.statusLabel.setText("Could not log in, try again later.")
+			return
 		if formattedData["success"] == "true":
 			# we now have a cookie and gameserver, we can log in now.
 			print("Success! Starting the game...")
@@ -83,38 +84,9 @@ class Main(QMainWindow):
 		params = {"queueToken": self.queueToken}
 		headers = {"Content-type": "application/x-www-form-urlencoded",
 				   "Accept": "text/plain"}
-		self.apiWorker = APIWorker(params, headers, self.connection)
+		self.apiWorker.setProps(params, headers, self.connection)
 		self.apiWorker.finished.connect(self.continueLogin)
 		self.apiWorker.start()
-		"""
-		self.connection.request("POST", "/api/login?format=json", params, headers)
-		try:
-			response = self.connection.getresponse()
-		except httplib.BadStatusLine:
-			self.statusLabel.setText("Unknown Error.")
-		data = response.read()
-		formattedData = json.loads(data)
-		if formattedData["success"] == "true":
-			# after 300 hours in line
-			print("Success! Starting the game...")
-			self.statusLabel.setText("Starting game...")
-			self.startGame(formattedData["cookie"], formattedData["gameserver"])
-			self.connection.close()
-		elif formattedData["success"] == "delayed":
-			# still waiting... schedule another ping...
-			print("Still waiting in queue... ETA: " + formattedData["eta"] + ", Position in line: " + formattedData["position"])
-			self.statusLabel.setText("ETA: " + formattedData["eta"] + ", Position in line: " + formattedData["position"])
-			self.queueToken = formattedData["queueToken"]
-			timer = QTimer(self.bgImage)
-			QObject.connect(timer, SIGNAL("timeout()"), self.pingQueue)
-			timer.setSingleShot(True)
-			timer.start(500)
-		else:
-			# server goes down or something
-			print("Unable to log into the game. Reason: " + formattedData["banner"])
-			self.statusLabel.setText(formattedData["banner"])
-			self.connection.close()
-		"""
 	
 	########################
 	#		  GAME		   #
@@ -131,51 +103,10 @@ class Main(QMainWindow):
 		# we're done here
 		sys.exit()
 	def checkForUpdates(self):
-		# retrieve patch manifest
-		patchmanifestRaw = urllib.urlopen("http://s3.amazonaws.com/cdn.toontownrewritten.com/content/patchmanifest.txt").read()
-		# parse it
-		patchmanifest = json.loads(patchmanifestRaw)
-		# iterate over list
-		for file in patchmanifest:
-			# if file is for windows (we dont need to be checking darwin files (yet))
-			if "win32" in patchmanifest[file]["only"]:
-				# get hash of local version
-				currentVerHash = self.generateHash(file)
-				# get hash of server version
-				serverHash = patchmanifest[file]["hash"]
-				if currentVerHash != serverHash:
-					# pull new file from server
-					# TODO: instead of redownloading whole file, figure out how to use patches
-					self.statusLabel.setText("Patch found for " + file)
-					print("Patch found for " + file)
-					newFileData = self.downloadFile(file)
-					print("Decompressing")
-					newFile = open(self.gameInstallPath + "temp/" + file, "wb")
-					newFile.write(newFileData)
-					newFile.close()
-					try:
-						os.remove(self.gameInstallPath + file)
-					except WindowsError, IOError:
-						pass
-					shutil.move(self.gameInstallPath + "temp/" + file, self.gameInstallPath + file)
-					
-		self.startLogin()
-	def downloadFile(self, file):
-		newFileComp = urllib.URLopener()
-		newFileComp.retrieve("http://kcmo-1.download.toontownrewritten.com/content/" + file,
-						 self.gameInstallPath + "temp/" + file + ".bz2")
-		return bz2.BZ2File(self.gameInstallPath + "temp/" + file + ".bz2").read()
-	def generateHash(self, filename):
-		sha = hashlib.sha1()
-		try:
-			file = open(self.gameInstallPath + filename, "rb")
-		except IOError:
-			return None
-		try:
-			sha.update(file.read())
-		finally:
-			file.close()
-		return sha.hexdigest()
+		self.dlWorker = DownloadWorker(self.gameInstallPath)
+		self.dlWorker.finished.connect(self.startLogin)
+		self.dlWorker.status.connect(self.statusLabel.setText)
+		self.dlWorker.start()
 		
 	########################
 	#		 WINDOW		   #
