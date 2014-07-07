@@ -140,22 +140,29 @@ class Main(QMainWindow):
 					# TODO: instead of redownloading whole file, figure out how to use patches
 					self.statusLabel.setText("Patch found for " + file)
 					print("Patch found for " + file)
-					newFileComp = urllib.URLopener()
-					newFileComp.retrieve("http://kcmo-1.download.toontownrewritten.com/content/" + file,
-									 self.gameInstallPath + "temp/" + file + ".bz2")
+					newFileData = self.downloadFile(file)
 					print("Decompressing")
-					newFileData = bz2.BZ2File(self.gameInstallPath + "temp/" + file + ".bz2").read()
 					newFile = open(self.gameInstallPath + "temp/" + file, "wb")
 					newFile.write(newFileData)
 					newFile.close()
-					os.remove(self.gameInstallPath + file)
+					try:
+						os.remove(self.gameInstallPath + file)
+					except WindowsError, IOError:
+						pass
 					shutil.move(self.gameInstallPath + "temp/" + file, self.gameInstallPath + file)
-					self.startLogin()
-				# print(file + ": " + self.generateHash(file))
-				
+					
+		self.startLogin()
+	def downloadFile(self, file):
+		newFileComp = urllib.URLopener()
+		newFileComp.retrieve("http://kcmo-1.download.toontownrewritten.com/content/" + file,
+						 self.gameInstallPath + "temp/" + file + ".bz2")
+		return bz2.BZ2File(self.gameInstallPath + "temp/" + file + ".bz2").read()
 	def generateHash(self, filename):
 		sha = hashlib.sha1()
-		file = open(self.gameInstallPath + filename, "rb")
+		try:
+			file = open(self.gameInstallPath + filename, "rb")
+		except IOError:
+			return None
 		try:
 			sha.update(file.read())
 		finally:

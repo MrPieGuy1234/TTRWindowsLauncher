@@ -21,6 +21,7 @@ python main.py
 * Downloading new files from game server
 * Two-factor auth
 * Invasion Tracker with notifications
+* Resource pack GUI
 
 [1]: http://sourceforge.net/projects/pyqt/files/PyQt4/PyQt-4.11.1/PyQt4-4.11.1-gpl-Py2.7-Qt4.8.6-x32.exe
 [2]: http://sourceforge.net/projects/pyqt/files/PyQt4/PyQt-4.11.1/PyQt4-4.11.1-gpl-Py2.7-Qt4.8.6-x64.exe
