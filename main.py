@@ -7,6 +7,7 @@ from Effect import *
 from LoginTextBox import *
 import httplib, urllib, json
 import hashlib, bz2
+from BackgroundWorker import *
 class Main(QMainWindow):
 
 	########################
@@ -28,27 +29,29 @@ class Main(QMainWindow):
 			# if someone tries to drag a button
 			pass
 	def loginEvent(self):
-		# make sure text can show up before the request hangs the application for some reason
-		self.statusLabel.setText("Logging in...")
-		timer = QTimer(self.bgImage)
-		QObject.connect(timer, SIGNAL("timeout()"), self.checkForUpdates)
-		timer.setSingleShot(True)
-		timer.start(100)
+		self.startLogin()
 	def startLogin(self):
+		self.statusLabel.setText("Logging in...")
 		print("Sending username/password to server...")
 		# assemble a request with username and password as parameters
-		params = urllib.urlencode({"username": str(self.usernameTextBox.text()), "password": str(self.passwordTextBox.text())})
+		params = {"username": str(self.usernameTextBox.text()), "password": str(self.passwordTextBox.text())}
 		headers = {"Content-type": "application/x-www-form-urlencoded",
 				   "Accept": "text/plain"}
-		# start a connection
-		self.connection = httplib.HTTPSConnection("www.toontownrewritten.com")
 		# send data to login API
-		self.connection.request("POST", "/api/login?format=json", params, headers)
+		self.apiWorker = APIWorker(params, headers)
+		self.apiWorker.finished.connect(self.continueLogin)
+		self.apiWorker.start()
+		
+	def continueLogin(self):
 		# get server response
-		response = self.connection.getresponse()
+		response = self.apiWorker.getresponse()
+		self.connection = self.apiWorker.getconnection()
 		data = response.read()
 		# turn json into pythonic format
-		formattedData = json.loads(data)
+		try:
+			formattedData = json.loads(data)
+		except ValueError:
+			self.statusLabel.setText("Could not log in, try again later.")
 		if formattedData["success"] == "true":
 			# we now have a cookie and gameserver, we can log in now.
 			print("Success! Starting the game...")
@@ -65,9 +68,9 @@ class Main(QMainWindow):
 			timer.setSingleShot(True)
 			timer.start(500)
 		elif formattedData["success"] == "partial":
-			# TODO: i dont have two-factor on my account
+			# TODO: implement two-factor
 			print("Two-factor auth not yet implemented")
-			self.statusLabel.setText("Two-factor not implemented.")
+			self.statusLabel.setText("Two-factor not available.")
 			self.connection.close()
 		else:
 			# can't log in, probably because of invalid password
@@ -77,9 +80,13 @@ class Main(QMainWindow):
 		
 	def pingQueue(self):
 		print("Pinging server for position in line...")
-		params = urllib.urlencode({"queueToken": self.queueToken})
+		params = {"queueToken": self.queueToken}
 		headers = {"Content-type": "application/x-www-form-urlencoded",
 				   "Accept": "text/plain"}
+		self.apiWorker = APIWorker(params, headers, self.connection)
+		self.apiWorker.finished.connect(self.continueLogin)
+		self.apiWorker.start()
+		"""
 		self.connection.request("POST", "/api/login?format=json", params, headers)
 		try:
 			response = self.connection.getresponse()
@@ -107,6 +114,7 @@ class Main(QMainWindow):
 			print("Unable to log into the game. Reason: " + formattedData["banner"])
 			self.statusLabel.setText(formattedData["banner"])
 			self.connection.close()
+		"""
 	
 	########################
 	#		  GAME		   #
@@ -114,7 +122,7 @@ class Main(QMainWindow):
 		
 	def startGame(self, cookie, gameserver):
 		# set the working directory to install directory
-		os.chdir("C:/Program Files (x86)/Toontown Rewritten")
+		os.chdir(self.gameInstallPath)
 		# set environment variables
 		os.environ["TTR_PLAYCOOKIE"] = cookie
 		os.environ["TTR_GAMESERVER"] = gameserver
