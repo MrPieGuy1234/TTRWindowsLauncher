@@ -18,9 +18,9 @@ python main.py
 * View recent news on the chalkboard (mousing over gives a better view)
 * Linux support (up to launching the game anyway)
 * Downloading new files from content server
+* Invasion Tracker
 
 ## To Be Implemented
-* Invasion Tracker with notifications
 * Resource pack GUI
 
 [1]: http://sourceforge.net/projects/pyqt/files/PyQt4/PyQt-4.11.1/PyQt4-4.11.1-gpl-Py2.7-Qt4.8.6-x32.exe
