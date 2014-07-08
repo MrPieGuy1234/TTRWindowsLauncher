@@ -119,12 +119,30 @@ class Main(QMainWindow):
 		self.gameInstance = subprocess.Popen("TTREngine.exe")
 		# switch back to old
 		os.chdir(oldCWD)
+		# hide the launcher
+		self.setWindowFlags(Qt.FramelessWindowHint | Qt.Tool)
 		# monitor game
 		self.gameChecker = GameWorker(self.gameInstance)
+		# tell us when the game exits
 		self.gameChecker.gameExit.connect(self.gameExited)
 		self.gameChecker.start()
+		# start tracking invasions
+		self.invasionWorker = InvasionWorker()
+		# send new data to dialog
+		self.invasionWorker.newInvasionData.connect(self.itDialog.newInvasionData)
+		self.invasionWorker.start()
+		# show tray icon
+		self.trayIcon.show()
+		self.trayIcon.showMessage("Invasions", "Now gathering invasion data. Click for details.", QSystemTrayIcon.Information, 6000)
+		
 	def gameExited(self, errCode):
-		self.repaint()
+		# show the launcher
+		self.setWindowFlags(Qt.FramelessWindowHint)
+		self.statusLabel.setText("")
+		self.show()
+		self.trayIcon.hide()
+		self.invasionWorker.terminate()
+		self.itDialog.hide()
 		if errCode != 0:
 			self.statusLabel.setText("Looks like the game crashed!")
 	def checkForUpdates(self):
@@ -132,6 +150,16 @@ class Main(QMainWindow):
 		self.dlWorker.finished.connect(self.startLogin)
 		self.dlWorker.status.connect(self.statusLabel.setText)
 		self.dlWorker.start()
+	
+	
+	########################
+	#		 TRACKER	   #
+	########################
+	
+	def quitInvasionTracker(self):
+		self.trayIcon.hide()
+	def showTrackerUI(self):
+		self.itDialog.show()
 	
 	########################
 	#		 WINDOW		   #
@@ -237,6 +265,8 @@ class Main(QMainWindow):
 	def __init__(self):
 		# create app, init parent
 		app = QApplication(sys.argv)
+		# make sure we quit only when we tell it to
+		app.setQuitOnLastWindowClosed(False)
 		QMainWindow.__init__(self)
 		
 		# make sure we're doing stuff in the right place
@@ -268,6 +298,15 @@ class Main(QMainWindow):
 		
 		# create the two-factor dialog for later
 		self.twoFactorDialog = TwoFactorDialog()
+		
+		# create invasion tracker dialog for later
+		self.itDialog = InvasionTrackerDialog()
+		# initialize tray icons
+		self.trayIcon = QSystemTrayIcon(QIcon("images/trayIcon.png"), self)
+		self.trayMenu = QMenu(self)
+		self.trayMenu.addAction("Exit", self.quitInvasionTracker)
+		self.trayMenu.addAction("Show Tracker", self.showTrackerUI)
+		self.trayIcon.setContextMenu(self.trayMenu)
 		
 		sys.exit(app.exec_())
 		

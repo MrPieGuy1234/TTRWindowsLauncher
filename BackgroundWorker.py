@@ -40,6 +40,20 @@ class APIWorker(QThread):
 		return self.response
 	def getconnection(self):
 		return self.connection
+class InvasionWorker(QThread):
+	newInvasionData = pyqtSignal(str)
+	def __init__(self):
+		QThread.__init__(self)
+		self.shouldRun = True
+	def run(self):
+		while True:
+			print("getting invasion")
+			self.connection = httplib.HTTPSConnection("www.toontownrewritten.com")
+			self.connection.request("GET", "/api/invasions")
+			self.response = self.connection.getresponse()
+			
+			self.newInvasionData.emit(self.response.read())
+			time.sleep(15)
 		
 class DownloadWorker(QThread):
 	status = pyqtSignal(str)
