@@ -2,6 +2,21 @@ from PyQt4.QtCore import *
 import sys, os, shutil
 import httplib, urllib, json
 import hashlib, bz2
+import time
+class GameWorker(QThread):
+	gameExit = pyqtSignal(int)
+	def __init__(self, gameInstance):
+		QThread.__init__(self)
+		self.gameInstance = gameInstance
+		
+	def run(self):
+		while True:
+			if self.gameInstance.poll() != None:
+				code = self.gameInstance.poll()
+				self.gameExit.emit(code)
+				break
+			time.sleep(0.5)
+		
 class APIWorker(QThread):
 	
 	def __init__(self, rawParams, headers, connection=None):

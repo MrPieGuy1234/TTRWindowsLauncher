@@ -108,21 +108,31 @@ class Main(QMainWindow):
 	########################
 		
 	def startGame(self, cookie, gameserver):
+		# save current working directory for later
+		oldCWD = os.getcwd()
 		# set the working directory to install directory
 		os.chdir(self.gameInstallPath)
 		# set environment variables
 		os.environ["TTR_PLAYCOOKIE"] = cookie
 		os.environ["TTR_GAMESERVER"] = gameserver
 		# start the game
-		subprocess.Popen("TTREngine.exe")
-		# we're done here
-		sys.exit()
+		self.gameInstance = subprocess.Popen("TTREngine.exe")
+		# switch back to old
+		os.chdir(oldCWD)
+		# monitor game
+		self.gameChecker = GameWorker(self.gameInstance)
+		self.gameChecker.gameExit.connect(self.gameExited)
+		self.gameChecker.start()
+	def gameExited(self, errCode):
+		self.repaint()
+		if errCode != 0:
+			self.statusLabel.setText("Looks like the game crashed!")
 	def checkForUpdates(self):
 		self.dlWorker = DownloadWorker(self.gameInstallPath)
 		self.dlWorker.finished.connect(self.startLogin)
 		self.dlWorker.status.connect(self.statusLabel.setText)
 		self.dlWorker.start()
-		
+	
 	########################
 	#		 WINDOW		   #
 	########################

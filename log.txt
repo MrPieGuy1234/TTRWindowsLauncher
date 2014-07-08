@@ -1,0 +1,24 @@
+first VirtualFileSystem::get_global_ptr()
+Reading game blob.
+Decrypting game blob
+Freezing modules
+Copying vector to array of _frozen
+Initializing python
+Starting game
+ToontownStart: Polling for game2 to finish...
+ToontownStart: Game2 is finished.
+ToontownStart: Starting the game.
+ToontownStart: setting default font
+TTLocalizer: Running in language: english
+from toontown.toonbase.TTLocalizerEnglish import *
+OTPLocalizer: Running in language: english
+from otp.otpbase.OTPLocalizerEnglish import *
+ToontownStart: Loading default gui sounds
+ToontownStart: serverVersion:  ttr-beta-v1.3.3
+{502000001: <toontown.distributed.ToontownDistrict.ToontownDistrict instance at 0x198124E0>, 505000001: <toontown.distributed.ToontownDistrict.ToontownDistrict instance at 0x19812468>, 503000001: <toontown.distributed.ToontownDistrict.ToontownDistrict instance at 0x198122D8>, 500000001: <toontown.distributed.ToontownDistrict.ToontownDistrict instance at 0x198123F0>, 504000001: <toontown.distributed.ToontownDistrict.ToontownDistrict instance at 0x19812558>, 506000001: <toontown.distributed.ToontownDistrict.ToontownDistrict instance at 0x198125A8>, 501000001: <toontown.distributed.ToontownDistrict.ToontownDistrict instance at 0x19812378>}
+Sending username/password to server...
+Now waiting in queue! ETA: 0, Position in line: 39
+Pinging server for position in line...
+Success! Starting the game...
+ping
+<bound method Popen.poll of <subprocess.Popen object at 0x0000000002E25588>>
